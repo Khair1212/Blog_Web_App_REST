@@ -5,7 +5,7 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class MyUserManager(BaseUserManager):
-    def create_user(self, email,  password=None):
+    def create_user(self, name, email, password=None, password2=None):
         """
         Creates and saves a User with the given email, date of
         birth and password.
@@ -14,6 +14,7 @@ class MyUserManager(BaseUserManager):
             raise ValueError('Users must have an email address')
 
         user = self.model(
+            name=name,
             email=self.normalize_email(email),
         )
 
@@ -21,13 +22,15 @@ class MyUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, email, password=None):
+    def create_superuser(self, name, email, password=None):
         """
         Creates and saves a superuser with the given email, date of
         birth and password.
         """
         user = self.create_user(
-            email,
+
+            name=name,
+            email=email,
             password=password,
         )
         user.is_admin = True
@@ -36,9 +39,13 @@ class MyUserManager(BaseUserManager):
         return user
 
 
-class MyUser(AbstractUser):
+class User(AbstractUser):
     name = models.CharField(max_length=255)
-    email = models.EmailField(max_length=255, unique=True)
+    email = models.EmailField(
+        verbose_name='Email',
+        max_length=255,
+        unique=True,
+    )
     password = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
@@ -48,7 +55,7 @@ class MyUser(AbstractUser):
     username = None
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['name', ]
 
     objects = MyUserManager()
 
@@ -59,4 +66,15 @@ class MyUser(AbstractUser):
         "Does the user have a specific permission?"
         # Simplest possible answer: Yes, always
         return True
+
+    def has_module_perms(self, app_label):
+        "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, always
+        return True
+
+    @property
+    def is_staff(self):
+        "Is the user a member of staff?"
+        # Simplest possible answer: All admins are staff
+        return self.is_admin
 

@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -27,12 +27,15 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
+REST_AUTH_TOKEN_MODEL = None
 
 INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'rest_framework',
     'rest_framework_simplejwt',
+    'drf_yasg',
+
+
 
     'django.contrib.admin',
     'django.contrib.auth',
@@ -41,13 +44,26 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+
 ]
 
+REST_USE_JWT = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_PERMISSION_CLASSES':[
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+SIMPLE_JWT = {
+'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
+'REFRESH_TOKEN_LIFETIME': timedelta(days=20),
+'ROTATE_REFRESH_TOKENS': False,
+'BLACKLIST_AFTER_ROTATION': True,
+
 }
 
 
@@ -134,4 +150,4 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'users.MyUser'
+AUTH_USER_MODEL = 'users.User'
