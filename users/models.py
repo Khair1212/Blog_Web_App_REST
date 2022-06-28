@@ -78,3 +78,16 @@ class User(AbstractUser):
         # Simplest possible answer: All admins are staff
         return self.is_admin
 
+
+class OTP(models.Model):
+    task_choice = [
+        ('active', 'Active Account'),
+        ('reset', 'Reset Pass'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    otp = models.IntegerField(editable=False, default=False),
+    has_used = models.BooleanField(default=False)
+    task_type = models.CharField(max_length=100, choices=task_choice, default='active')
+
+    def __str__(self):
+        return self.user
