@@ -1,12 +1,15 @@
 from django.shortcuts import render
 from rest_framework.exceptions import APIException
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
-
+from rest_framework.views import APIView
 from .models import User
-from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, LoginSerializer
+from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, ResetPasswordSerializer, \
+    PasswordConfirmSerializer
 from django.contrib.auth import get_user_model
 from .permissions import UserPermission
+from .renderers import UserRenderer
 
 
 # Create your views here.
@@ -15,7 +18,7 @@ class UserView(viewsets.ModelViewSet):
     queryset = User.objects.all()
     permission_classes = (UserPermission,)
     lookup_field = 'id'
-
+    renderer_classes = [UserRenderer, ]
     default_serializer_class = UserSerializer
     serializer_classes = {
         'list': UserSerializer,
@@ -43,12 +46,12 @@ class UserView(viewsets.ModelViewSet):
     # override
     def create(self, request, *args, **kwargs):
         try:
-            print("In Create Line ")
             data = request.data
             serializer = RegisterUserSerializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 try:
                     serializer.save()
+                    # send_otp_via_email(serializer.data['email'])
                     return Response({'message': 'Account Created Successfully'}, status=status.HTTP_201_CREATED)
                 except Exception as e:
                     error = f'Server Error: {e}'
@@ -58,7 +61,6 @@ class UserView(viewsets.ModelViewSet):
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def update(self, request, *args, **kwargs):
-        print("In Update Line")
         try:
             instance = self.get_object()
             serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
@@ -85,3 +87,33 @@ class UserView(viewsets.ModelViewSet):
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasswordResetView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = (AllowAny,)
+
+    def post(self, request, format=None):
+        try:
+            serializer = ResetPasswordSerializer(data=request.data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    return Response({'message': 'Password Reset link has been send. Please check your Email'},
+                                    status=status.HTTP_200_OK)
+
+            except Exception as e:
+                error = f'Server Error: {e}'
+                return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PasswordConfirmView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = (AllowAny,)
+
+    def post(self, request, uid, token, format=None):
+        serializer = PasswordConfirmSerializer(data=request.data, context={'uid': uid, 'token': token})
+        serializer.is_valid(raise_exception=True)
+        return Response({'msg': 'Password Reset Successfully'}, status=status.HTTP_200_OK)
