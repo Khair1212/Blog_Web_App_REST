@@ -30,4 +30,9 @@ class UserModelAdmin(BaseUserAdmin):
 
 # Now register the new UserModelAdmin...
 admin.site.register(User, UserModelAdmin)
-admin.site.register(OTP)
+#admin.site.register(OTP)
+
+@admin.register(OTP)
+class OTPAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'code', 'has_used', 'task_type')
+    

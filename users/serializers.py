@@ -5,7 +5,8 @@ from django.utils.encoding import smart_str, force_bytes, DjangoUnicodeDecodeErr
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
-from .models import User
+from .models import User, OTP
+from .utils import Util
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -19,7 +20,7 @@ class RegisterUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'name', 'password', 'password2']
+        fields = ['id', 'email', 'name', 'password', 'password2']
         extra_kwargs = {
             'password': {'write_only': True}
         }
@@ -40,6 +41,27 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         #     instance.set_password(password)
         # instance.save()
         # return instance
+
+
+class AccountActiveSerializer(serializers.Serializer):
+    otp = serializers.CharField(max_length=10)
+
+    class Meta:
+        fields = ['otp']
+
+    def validate(self, attrs):
+        otp = attrs.get('otp')
+        umail = self.context.get('umail')
+        email = smart_str(urlsafe_base64_decode(umail))
+        print()
+        user = User.objects.get(email=email)
+        otp_obj = OTP.objects.get(user=user)
+        if OTP.objects.filter(code=otp).exists():
+            otp_obj.has_used = True
+            otp_obj.save()
+            return attrs
+        else:
+            ValidationError('Your OTP is not correct')
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
@@ -70,6 +92,17 @@ class ResetPasswordSerializer(serializers.Serializer):
             print("Password Reset Token", token)
             link = 'http://localhost:3000/api/user/reset/' + uid + '/' + token
             print("Password Reset Link", link)
+
+            # Send Email
+            body = 'Click the following link to reset your Password ' + link
+            data = {
+                'subject': 'Reset Your Password',
+                'body': body,
+                'to_email': user.email
+            }
+
+            Util.send_email(data)
+
             return attrs
         else:
             raise ValidationError('You are not a Registered User')

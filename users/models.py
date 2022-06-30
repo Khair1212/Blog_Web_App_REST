@@ -85,9 +85,11 @@ class OTP(models.Model):
         ('reset', 'Reset Pass'),
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    otp = models.IntegerField(editable=False, default=False),
+    code = models.CharField(max_length=10, null=True, blank=True)
     has_used = models.BooleanField(default=False)
     task_type = models.CharField(max_length=100, choices=task_choice, default='active')
 
-    def __str__(self):
-        return self.user
+    # def __str__(self):
+    #     return self.code
+
+

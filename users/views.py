@@ -1,12 +1,18 @@
+import random
+
 from django.shortcuts import render
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
-from .models import User
+
+from .email import send_otp_via_email
+from .models import User, OTP
 from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, ResetPasswordSerializer, \
-    PasswordConfirmSerializer
+    PasswordConfirmSerializer, AccountActiveSerializer
 from django.contrib.auth import get_user_model
 from .permissions import UserPermission
 from .renderers import UserRenderer
@@ -51,8 +57,23 @@ class UserView(viewsets.ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 try:
                     serializer.save()
-                    # send_otp_via_email(serializer.data['email'])
-                    return Response({'message': 'Account Created Successfully'}, status=status.HTTP_201_CREATED)
+
+
+                    #  OTP Code Generation
+                    user = User.objects.get(email=serializer.data.get('email'))
+                    otp = random.randint(100000, 999999)
+                    account_activation = OTP.objects.create(user=user, code=otp, task_type='active')
+                    print(account_activation.code)
+
+                    # link Generation
+                    email = serializer.data.get('email')
+                    umail = urlsafe_base64_encode(force_bytes(email))
+                    link = 'http://127.0.0.1:8000/api/account_active/' + umail
+
+                    # send_otp_via_email(user.email, account_activation)
+                    return Response(
+                        {'message': f'OTP has been sent to your email. Please verify your account by going to the following link: {link}'},
+                        status=status.HTTP_201_CREATED)
                 except Exception as e:
                     error = f'Server Error: {e}'
                     return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -80,10 +101,27 @@ class UserView(viewsets.ModelViewSet):
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, *args, **kwargs):
-
         try:
             instance = self.get_object()
             return Response({'message': 'User has been deleted!'}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class AccountActiveOrResetView(APIView):
+    renderer_classes = [UserRenderer]
+    permission_classes = (AllowAny,)
+
+    def post(self, request, umail, format=None):
+        try:
+            serializer = AccountActiveSerializer(data=request.data, context={'umail': umail})
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    return Response({'message': 'Account Created Succesfully'}, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                error = f'Server Error: {e}'
+                return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
