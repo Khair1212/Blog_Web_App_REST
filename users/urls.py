@@ -12,5 +12,5 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/account_active/<umail>/', AccountActiveOrResetView.as_view(), name = 'account_active'),
     path('api/password-reset/', PasswordResetView.as_view(), name='password_reset' ),
-    path('api/confirm-password/<uid>/<token>/', PasswordConfirmView.as_view(), name= 'confirm_password')
+    path('api/confirm-password/<umail>/<otp>/', PasswordConfirmView.as_view(), name= 'confirm_password')
 ]

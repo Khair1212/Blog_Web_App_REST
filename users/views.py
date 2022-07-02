@@ -1,8 +1,8 @@
 import random
 
 from django.shortcuts import render
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes, smart_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -11,12 +11,12 @@ from rest_framework.views import APIView
 
 from .email import send_otp_via_email
 from .models import User, OTP
-from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, ResetPasswordSerializer, \
+from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, ResetPasswordSendEmailSerializer, \
     PasswordConfirmSerializer, AccountActiveSerializer
 from django.contrib.auth import get_user_model
 from .permissions import UserPermission
 from .renderers import UserRenderer
-
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 # Create your views here.
 
@@ -57,8 +57,6 @@ class UserView(viewsets.ModelViewSet):
             if serializer.is_valid(raise_exception=True):
                 try:
                     serializer.save()
-
-
                     #  OTP Code Generation
                     user = User.objects.get(email=serializer.data.get('email'))
                     otp = random.randint(100000, 999999)
@@ -69,10 +67,10 @@ class UserView(viewsets.ModelViewSet):
                     email = serializer.data.get('email')
                     umail = urlsafe_base64_encode(force_bytes(email))
                     link = 'http://127.0.0.1:8000/api/account_active/' + umail
-
+                    print(link)
                     # send_otp_via_email(user.email, account_activation)
                     return Response(
-                        {'message': f'OTP has been sent to your email. Please verify your account by going to the following link: {link}'},
+                        {'message': f'OTP has been sent to your email. Please check your mail'},
                         status=status.HTTP_201_CREATED)
                 except Exception as e:
                     error = f'Server Error: {e}'
@@ -108,6 +106,14 @@ class UserView(viewsets.ModelViewSet):
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class TokenPairView(TokenObtainPairView):
+    renderer_classes = [UserRenderer]
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+
+
+
 
 class AccountActiveOrResetView(APIView):
     renderer_classes = [UserRenderer]
@@ -118,7 +124,16 @@ class AccountActiveOrResetView(APIView):
             serializer = AccountActiveSerializer(data=request.data, context={'umail': umail})
             try:
                 if serializer.is_valid(raise_exception=True):
-                    return Response({'message': 'Account Created Succesfully'}, status=status.HTTP_201_CREATED)
+                    # Check wheather the response is for Activating a account or Resetting the Password
+                    otp_obj = OTP.objects.get(code=serializer.data.get('otp'))
+                    print(otp_obj.task_type)
+
+                    if otp_obj.task_type == 'active':
+                        return Response({'message': 'Account Created Succesfully'}, status=status.HTTP_201_CREATED)
+                    else:
+                        link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(otp_obj.code)
+                        print("Password Reset Link", link)
+                        return Response({'message': f'Reset Password by going to this link: {link}', }, status=status.HTTP_201_CREATED)
             except Exception as e:
                 error = f'Server Error: {e}'
                 return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -133,7 +148,7 @@ class PasswordResetView(APIView):
 
     def post(self, request, format=None):
         try:
-            serializer = ResetPasswordSerializer(data=request.data)
+            serializer = ResetPasswordSendEmailSerializer(data=request.data)
             try:
                 if serializer.is_valid(raise_exception=True):
                     return Response({'message': 'Password Reset link has been send. Please check your Email'},
@@ -151,7 +166,7 @@ class PasswordConfirmView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = (AllowAny,)
 
-    def post(self, request, uid, token, format=None):
-        serializer = PasswordConfirmSerializer(data=request.data, context={'uid': uid, 'token': token})
+    def post(self, request, umail, otp, format=None):
+        serializer = PasswordConfirmSerializer(data=request.data, context={'umail': umail, 'otp': otp})
         serializer.is_valid(raise_exception=True)
         return Response({'msg': 'Password Reset Successfully'}, status=status.HTTP_200_OK)

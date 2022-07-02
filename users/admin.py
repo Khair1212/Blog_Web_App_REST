@@ -35,4 +35,3 @@ admin.site.register(User, UserModelAdmin)
 @admin.register(OTP)
 class OTPAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'code', 'has_used', 'task_type')
-    

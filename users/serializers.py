@@ -1,3 +1,5 @@
+import random
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -53,15 +55,17 @@ class AccountActiveSerializer(serializers.Serializer):
         otp = attrs.get('otp')
         umail = self.context.get('umail')
         email = smart_str(urlsafe_base64_decode(umail))
-        print()
         user = User.objects.get(email=email)
-        otp_obj = OTP.objects.get(user=user)
-        if OTP.objects.filter(code=otp).exists():
-            otp_obj.has_used = True
-            otp_obj.save()
-            return attrs
-        else:
-            ValidationError('Your OTP is not correct')
+        otp_obj = OTP.objects.filter(user=user).last()
+        try:
+            if OTP.objects.filter(code=otp).exists():
+                otp_obj.has_used = True
+                otp_obj.save()
+                return attrs
+            else:
+                raise ValidationError('Your OTP is not correct')
+        except Exception as e:
+            raise ValidationError('OTP Validation Error:', e)
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
@@ -76,7 +80,7 @@ class LoginSerializer(serializers.ModelSerializer):
         fields = ['email', 'password']
 
 
-class ResetPasswordSerializer(serializers.Serializer):
+class ResetPasswordSendEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=255)
 
     class Meta:
@@ -86,15 +90,18 @@ class ResetPasswordSerializer(serializers.Serializer):
         email = attrs.get('email')
         if User.objects.filter(email=email).exists():
             user = User.objects.get(email=email)
-            uid = urlsafe_base64_encode(force_bytes(user.id))
-            print('Encoded UID', uid)
-            token = PasswordResetTokenGenerator().make_token(user)
-            print("Password Reset Token", token)
-            link = 'http://localhost:3000/api/user/reset/' + uid + '/' + token
+            umail = urlsafe_base64_encode(force_bytes(user.email))
+            print('Encoded User Mail', umail)
+            # token = PasswordResetTokenGenerator().make_token(user)
+            # Generate OTP
+            otp = random.randint(100000, 999999)
+            reset_otp = OTP.objects.create(user=user, code=otp, task_type='reset')
+            print("Password Reset OTP", reset_otp.code)
+            link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(reset_otp.code)
             print("Password Reset Link", link)
 
             # Send Email
-            body = 'Click the following link to reset your Password ' + link
+            body = f'Otp Code: {otp}, Click the following link to reset your Password' + link
             data = {
                 'subject': 'Reset Your Password',
                 'body': body,
@@ -119,13 +126,14 @@ class PasswordConfirmSerializer(serializers.Serializer):
         try:
             password = attrs.get('password')
             password2 = attrs.get('password2')
-            uid = self.context.get('uid')
-            token = self.context.get('token')
+            umail = self.context.get('umail')
+            token = self.context.get('otp')
             if password != password2:
                 raise serializers.ValidationError("Password and Confirm Password doesn't match")
-            id = smart_str(urlsafe_base64_decode(uid))
-            user = User.objects.get(id=id)
-            if not PasswordResetTokenGenerator().check_token(user, token):
+            email = smart_str(urlsafe_base64_decode(umail))
+            user = User.objects.get(email=email)
+
+            if not OTP.objects.filter(code=token).exists():
                 raise serializers.ValidationError('Token is not Valid or Expired')
             user.set_password(password)
             user.save()
