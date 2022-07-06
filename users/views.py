@@ -3,7 +3,7 @@ import random
 from django.shortcuts import render
 from django.utils.encoding import force_bytes, smart_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets, status, generics
@@ -12,11 +12,13 @@ from rest_framework.views import APIView
 from .email import send_otp_via_email
 from .models import User, OTP
 from .serializers import UserSerializer, RegisterUserSerializer, UpdateUserSerializer, ResetPasswordSendEmailSerializer, \
-    PasswordConfirmSerializer, AccountActiveSerializer
-from django.contrib.auth import get_user_model
+    PasswordConfirmSerializer, AccountActiveSerializer, UserLoginSerializer
+from django.contrib.auth import get_user_model, authenticate
 from .permissions import UserPermission
 from .renderers import UserRenderer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 # Create your views here.
 
@@ -101,18 +103,45 @@ class UserView(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+            self.perform_destroy(instance)
             return Response({'message': 'User has been deleted!'}, status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class TokenPairView(TokenObtainPairView):
+    def perform_destroy(self, instance):
+        instance.delete()
+
+class TokenPairView(APIView):
     renderer_classes = [UserRenderer]
-    permission_classes = (AllowAny,)
+    #permission_classes = (AllowAny,)
 
-    def post(self, request, *args, **kwargs):
-
-
+    def post(self, request,format=None, *args, **kwargs, ):
+        try:
+            serializer = UserLoginSerializer(data=request.data)
+            try:
+                if serializer.is_valid(raise_exception=True):
+                    email = serializer.data.get('email')
+                    password = serializer.data.get('password')
+                    user = authenticate(email=email, password=password)
+                    if user is not None:
+                        otp_obj = OTP.objects.get(user=user, task_type='active')
+                        if otp_obj.has_used == True:
+                            refresh = RefreshToken.for_user(user)
+                            token = {
+                                'refresh': str(refresh),
+                                'access': str(refresh.access_token),
+                            }
+                            return Response({'token': token, 'message': 'Login Success'}, status=status.HTTP_200_OK)
+                        else:
+                            return Response({'message': "Email is not verified"}, status=status.HTTP_403_FORBIDDEN)
+                    else:
+                        return Response({'message': 'Email or Password is not Valid'}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                error = f'Server Error: {e}'
+                return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AccountActiveOrResetView(APIView):
@@ -133,7 +162,8 @@ class AccountActiveOrResetView(APIView):
                     else:
                         link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(otp_obj.code)
                         print("Password Reset Link", link)
-                        return Response({'message': f'Reset Password by going to this link: {link}', }, status=status.HTTP_201_CREATED)
+                        return Response({'message': f'Reset Password by going to this link: {link}', },
+                                        status=status.HTTP_201_CREATED)
             except Exception as e:
                 error = f'Server Error: {e}'
                 return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

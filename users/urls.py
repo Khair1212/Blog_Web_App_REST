@@ -1,16 +1,17 @@
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.routers import SimpleRouter
-from .views import UserView, PasswordResetView, PasswordConfirmView, AccountActiveOrResetView
+from .views import UserView, PasswordResetView, PasswordConfirmView, AccountActiveOrResetView, TokenPairView
 
 router = SimpleRouter()
-router.register(r'users', UserView, basename='users')
+router.register('users', UserView, basename='users')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/account_active/<umail>/', AccountActiveOrResetView.as_view(), name = 'account_active'),
-    path('api/password-reset/', PasswordResetView.as_view(), name='password_reset' ),
-    path('api/confirm-password/<umail>/<otp>/', PasswordConfirmView.as_view(), name= 'confirm_password')
+    # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/', TokenPairView.as_view(), name='token_obtain'),
+    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('account_active/<umail>/', AccountActiveOrResetView.as_view(), name='account_active'),
+    path('password-reset/', PasswordResetView.as_view(), name='password_reset'),
+    path('confirm-password/<umail>/<otp>/', PasswordConfirmView.as_view(), name='confirm_password')
 ]
