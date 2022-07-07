@@ -13,12 +13,12 @@ class PostSerializer(serializers.ModelSerializer):
 class PostCreateSerializer(serializers.ModelSerializer):
     # Create a custom method field
 
-    # created_by = serializers.PrimaryKeyRelatedField(read_only=True, default=serializers.CurrentUserDefault())
-    # print(created_by.pk_field)
-    # created_by = serializers.get
+    # created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+    # post = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
+
     class Meta:
         model = Post
-        fields = ('id', 'title', 'description', 'status', 'created',)
+        fields = ('id', 'title', 'description', 'status', 'created')
 
 
 class PostUpdateSerializer(serializers.ModelSerializer):
@@ -32,7 +32,14 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         model = Comment
         fields = ('id', 'body', 'created')
 
+
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ('id', 'body', 'created')
+        fields = '__all__'
+
+
+class CommentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('id', 'body', 'updated')

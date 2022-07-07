@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from .models import Post, Comment
 from .permissions import IsAuthorOrReadOnly
 from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentCreateSerializer, \
-    CommentSerializer
+    CommentSerializer, CommentUpdateSerializer
 from rest_framework import permissions
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -142,13 +142,14 @@ class PostViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     lookup_field = 'id'
-    #default_serializer_class = PostSerializer
-    # serializer_classes = {
-    #     'list': PostSerializer,
-    #     'create': PostCreateSerializer,
-    #     'update': PostUpdateSerializer,
-    #     'partial_update': PostUpdateSerializer,
-    # }
+
+    default_serializer_class = CommentSerializer
+    serializer_classes = {
+        'list': CommentSerializer,
+        'create': CommentCreateSerializer,
+        # 'update': CommentUpdateSerializer,
+        # 'partial_update': CommentUpdateSerializer
+    }
 
     # Get Serializer for specific action
     def get_serializer_class(self):
@@ -163,21 +164,54 @@ class CommentViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsAuthorOrReadOnly, ]
         return [permission() for permission in self.permission_classes]
 
-    def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user, post=self.get_object())
+    def perform_create(self, post, serializer):
+        serializer.save(created_by=self.request.user)
 
-    def create(self, request, pk=None, *args, **kwargs):
-        print(kwargs)
+    def create(self, request, *args, **kwargs):
+
         try:
             data = request.data
-            serializer = CommentCreateSerializer(data=data)
-            #post = self.get_object()
-            #print(post)
+            serializer = CommentCreateSerializer(data=data,)
+            post = Post.objects.get(id=kwargs.get('pk'))
+            print(post)
             if serializer.is_valid(raise_exception=True):
-                self.perform_create( serializer)
+                # self.perform_create(serializer)
+                serializer.save(comment_by=request.user, post=post)
 
+                return Response(serializer.data)
             return Response({'message': f'Comment Added to post'},
-                            status=status.HTTP_201_CREATED)
+                                status=status.HTTP_201_CREATED)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def perform_update(self, serializer):
+        serializer.save(comment_by=self.request.user)
+
+    def update(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+            post = Post.objects.get(id=kwargs.get('pk'))
+            if serializer.is_valid():
+                serializer.save(comment_by=request.user, post=post)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def partial_update(self, request, *args, **kwargs):
+        kwargs['partial'] = True
+        return self.update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response({'message': 'The comment has been deleted!'}, status=status.HTTP_204_NO_CONTENT)
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        def perform_destroy(self, instance):
+            instance.delete()

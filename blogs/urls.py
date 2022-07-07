@@ -3,10 +3,13 @@ from rest_framework.routers import SimpleRouter
 
 from .views import PostViewSet, CommentViewSet
 
-router = SimpleRouter()
-router.register('blogs', PostViewSet, basename='posts')
-router.register('blogs/<int:pk>/comments/', CommentViewSet, basename = 'comments')
+router1 = SimpleRouter()
+router1.register('blogs', PostViewSet, basename='posts')
+
+router2 = SimpleRouter()
+router2.register('comments', CommentViewSet, basename='comments')
 
 urlpatterns = [
-    path('', include(router.urls))
+    path('', include(router1.urls)),
+    path('blogs/<int:pk>/', include(router2.urls))
 ]
