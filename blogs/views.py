@@ -2,13 +2,16 @@ from django.shortcuts import render
 from django_filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
+from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Post
+from .models import Post, Comment
 from .permissions import IsAuthorOrReadOnly
-from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer
+from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentCreateSerializer, \
+    CommentSerializer
 from rest_framework import permissions
 from rest_framework import permissions
 from rest_framework import viewsets
@@ -23,7 +26,7 @@ class Pagination(PageNumberPagination):
     page_query_param = 'page'
     # page_size_query_param = 'records
     max_page_size = 10
-    #last_page_strings = 'end'
+    # last_page_strings = 'end'
 
 
 # Post viewSet Class
@@ -36,7 +39,7 @@ class PostViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['id', 'title', 'created_by']
     search_fields = ['title', 'description', 'created_by__name', 'status']
-    #ordering_fields = ['id', 'title', 'description', 'created_by', 'status']
+    # ordering_fields = ['id', 'title', 'description', 'created_by', 'status']
 
     default_serializer_class = PostSerializer
     serializer_classes = {
@@ -69,9 +72,8 @@ class PostViewSet(viewsets.ModelViewSet):
             serializer = PostCreateSerializer(data=data)
             if serializer.is_valid(raise_exception=True):
                 self.perform_create(serializer)
-                return Response(
-                    {'message': f'Post has been published!'},
-                    status=status.HTTP_201_CREATED)
+            return Response({'message': f'Post has been published!'},
+                            status=status.HTTP_201_CREATED)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -117,10 +119,65 @@ class PostViewSet(viewsets.ModelViewSet):
         try:
             instance = self.get_object()
             self.perform_destroy(instance)
-            return Response({"message": f"Post titled '{instance.title}' has been deleted!"}, status=status.HTTP_204_NO_CONTENT)
+            return Response({"message": f"Post titled '{instance.title}' has been deleted!"},
+                            status=status.HTTP_204_NO_CONTENT)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def perform_destroy(self, instance):
         instance.delete()
+
+    # @action(methods=['get'], detail=True)
+    # def comments(self, request, pk=None):
+    #     try:
+    #         post = Post.objects.get(id=pk)
+    #     except Post.DoesNotExist:
+    #         return Response({"error": "Post not found. "}, status=status.HTTP_400_BAD_REQUEST)
+    #     comments = post.comments.all()
+    #     return Response(CommentSerializer(comments, many=True))
+
+
+# Comment Viewset
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    lookup_field = 'id'
+    #default_serializer_class = PostSerializer
+    # serializer_classes = {
+    #     'list': PostSerializer,
+    #     'create': PostCreateSerializer,
+    #     'update': PostUpdateSerializer,
+    #     'partial_update': PostUpdateSerializer,
+    # }
+
+    # Get Serializer for specific action
+    def get_serializer_class(self):
+        return self.serializer_classes.get(self.action, self.default_serializer_class)
+
+    def get_permissions(self):
+        if self.action == 'create':
+            self.permission_classes = [permissions.IsAuthenticated, ]
+        elif self.action == 'list':
+            self.permission_classes = [permissions.AllowAny, ]
+        else:
+            self.permission_classes = [IsAuthorOrReadOnly, ]
+        return [permission() for permission in self.permission_classes]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user, post=self.get_object())
+
+    def create(self, request, pk=None, *args, **kwargs):
+        print(kwargs)
+        try:
+            data = request.data
+            serializer = CommentCreateSerializer(data=data)
+            #post = self.get_object()
+            #print(post)
+            if serializer.is_valid(raise_exception=True):
+                self.perform_create( serializer)
+
+            return Response({'message': f'Comment Added to post'},
+                            status=status.HTTP_201_CREATED)
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -114,7 +114,7 @@ class UserView(viewsets.ModelViewSet):
 
 class TokenPairView(APIView):
     renderer_classes = [UserRenderer]
-    #permission_classes = (AllowAny,)
+    # permission_classes = (AllowAny,)
 
     def post(self, request,format=None, *args, **kwargs, ):
         try:
@@ -126,7 +126,8 @@ class TokenPairView(APIView):
                     user = authenticate(email=email, password=password)
                     if user is not None:
                         otp_obj = OTP.objects.get(user=user, task_type='active')
-                        if otp_obj.has_used == True:
+
+                        if otp_obj.has_used:
                             refresh = RefreshToken.for_user(user)
                             token = {
                                 'refresh': str(refresh),
@@ -158,7 +159,7 @@ class AccountActiveOrResetView(APIView):
                     print(otp_obj.task_type)
 
                     if otp_obj.task_type == 'active':
-                        return Response({'message': 'Account Created Succesfully'}, status=status.HTTP_201_CREATED)
+                        return Response({'message': 'Account Created Successfully'}, status=status.HTTP_201_CREATED)
                     else:
                         link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(otp_obj.code)
                         print("Password Reset Link", link)
