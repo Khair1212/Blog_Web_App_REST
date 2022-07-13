@@ -253,6 +253,262 @@
 ```
 
 
+### **11. Post List [GET]**
+**Endpoint:** http://127.0.0.1:8000/api/v1/blogs/
+
+**Authorization:** AllowAny
+
+**Request Body:**
+
+```
+
+```
+**Sample Response:**
+
+```
+{
+    "count": 5,
+    "next": "http://127.0.0.1:8000/api/v1/blogs/?page=2",
+    "previous": null,
+    "results": [
+        {
+            "id": 5,
+            "title": "Blog 3",
+            "description": "This is my 3rd Blog",
+            "status": "draft",
+            "created": "2022-07-06T07:11:40.860273Z",
+            "modified": "2022-07-06T07:11:40.860273Z",
+            "created_by": 4
+        },
+        {
+            "id": 7,
+            "title": "Blog 4",
+            "description": "This is my 4th Blog",
+            "status": "draft",
+            "created": "2022-07-06T07:27:20.937126Z",
+            "modified": "2022-07-06T07:27:20.937126Z",
+            "created_by": 3
+        }
+    ]
+}
+```
+**Instructions:** Searching and Filering are Available. Also pagination is implemented.  
+
+### **12. Post Detail View [GET]**
+**Endpoint:** http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
+
+**Authorization:** AllowAny
+
+**Request Body:**
+
+```
+
+```
+**Sample Response:**
+
+```
+{
+    "id": 2,
+    "title": "Demo",
+    "description": "Demo Demo Demo",
+    "status": "published",
+    "created": "2022-07-06T05:34:59.275908Z",
+    "modified": "2022-07-06T10:08:31.054270Z",
+    "created_by": 28
+}
+```
+
+### **13. Create Blog Post [POST]**
+**Endpoint:** http://127.0.0.1:8000/api/v1/blogs/
+
+**Authorization:** Authenticated User
+
+**Request Body:**
+
+```
+{
+    "title": "Rest API V2",
+    "description": "Django Rest FrameWork",
+    "status": "published"
+}
+```
+**Sample Response:**
+
+```
+{
+    "message": "Post has been published!"
+}
+```
+**Instructions:** Authorization header should be included
+
+
+
+
+### **14. Update Blog Post [PUT]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
+
+**Authorization:** Author of the Post or Admin
+
+**Request Body:**
+
+```
+{
+    "title": "Rest API V2",
+    "description": "Django Rest FrameWork",
+    "status": "published"
+}
+```
+**Sample Response:**
+
+```
+{
+    "message": "Post has been published!"
+}
+```
+**Instructions:** Authorization header should be included
+
+
+### **15. Partial Update Blog Post [PUT]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
+
+**Authorization:** Author of the Post or Admin
+
+**Request Body:**
+
+```
+{
+    "title": "Rest API V2",
+    "description": "Django Rest FrameWork",
+    "status": "published"
+}
+```
+**Sample Response:**
+
+```
+{
+    "message": "Post has been published!"
+}
+```
+**Instructions:** Authorization header should be included
+
+### **16. Delete Blog Post [PUT]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
+
+**Authorization:** Author of the Post or Admin
+
+**Request Body:**
+
+```
+{
+    "title": "Rest API V2",
+    "description": "Django Rest FrameWork",
+    "status": "published"
+}
+```
+**Sample Response:**
+
+```
+{
+    "message": "Post has been published!"
+}
+```
+**Instructions:** Authorization header should be included
+
+### **17. Add Comment [POST]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/
+
+**Authorization:** AllowAny
+
+**Request Body:**
+
+```
+{
+    "body": "Another Comment",
+    "post": 32
+}
+```
+**Sample Response:**
+
+```
+{
+    "id": 6,
+    "body": "Another Comment",
+    "created": "2022-07-13T14:09:58.827290Z"
+}
+```
+
+
+
+### **18. View Comments [GET]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/
+
+**Authorization:** AllowAny
+
+**Request Body:**
+
+```
+
+```
+**Sample Response:**
+
+```
+[
+    {
+        "id": 1,
+        "body": "Informative",
+        "created": "2022-07-07T10:05:10.010430Z",
+        "modified": "2022-07-07T10:05:10.010430Z",
+        "comment_by": 8,
+        "post": 9
+    },
+    {
+        "id": 6,
+        "body": "Another Comment",
+        "created": "2022-07-13T14:09:58.827290Z",
+        "modified": "2022-07-13T14:09:58.827290Z",
+        "comment_by": 32,
+        "post": 9
+    }
+]
+```
+
+### **19. Update Comments [PUT]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/
+
+**Authorization:** AllowAny
+
+**Request Body:**
+
+```
+
+```
+**Sample Response:**
+
+```
+[
+    {
+        "id": 1,
+        "body": "Informative",
+        "created": "2022-07-07T10:05:10.010430Z",
+        "modified": "2022-07-07T10:05:10.010430Z",
+        "comment_by": 8,
+        "post": 9
+    },
+    {
+        "id": 6,
+        "body": "Another Comment",
+        "created": "2022-07-13T14:09:58.827290Z",
+        "modified": "2022-07-13T14:09:58.827290Z",
+        "comment_by": 32,
+        "post": 9
+    }
+]
+```
+
+
+
+
+
 # Models
 
 #### User
