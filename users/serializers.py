@@ -93,14 +93,14 @@ class ResetPasswordSendEmailSerializer(serializers.Serializer):
         if User.objects.filter(email=email).exists():
             user = User.objects.get(email=email)
             umail = urlsafe_base64_encode(force_bytes(user.email))
-            print('Encoded User Mail', umail)
+            #print('Encoded User Mail', umail)
             # token = PasswordResetTokenGenerator().make_token(user)
             # Generate OTP
             otp = random.randint(100000, 999999)
             reset_otp = OTP.objects.create(user=user, code=otp, task_type='reset')
-            print("Password Reset OTP", reset_otp.code)
-            link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(reset_otp.code)
-            print("Password Reset Link", link)
+            #print("Password Reset OTP", reset_otp.code)
+            link = 'http://localhost:3000/api/v1/users/password-reset/' + umail + '/' + str(reset_otp.code)
+            #print("Password Reset Link", link)
 
             # Send Email
             body = f'Otp Code: {otp}, Click the following link to reset your Password' + link

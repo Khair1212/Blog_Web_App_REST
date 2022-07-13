@@ -21,6 +21,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 
 # Create your views here.
+from .utils import Util
+
 
 class UserView(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -68,9 +70,19 @@ class UserView(viewsets.ModelViewSet):
                     # link Generation
                     email = serializer.data.get('email')
                     umail = urlsafe_base64_encode(force_bytes(email))
-                    link = 'http://127.0.0.1:8000/api/account_active/' + umail
-                    print(link)
+                    link = 'http://127.0.0.1:8000/api/v1/account_active/' + umail
+                    #print(link)
                     # send_otp_via_email(user.email, account_activation)
+                    body = f'Otp Code: {otp}, Click the following link to active your account' + link
+                    data = {
+                        'subject': 'Active your Account',
+                        'body': body,
+                        'to_email': user.email
+                    }
+
+                    Util.send_email(data)
+
+
                     return Response(
                         {'message': f'OTP has been sent to your email. Please check your mail'},
                         status=status.HTTP_201_CREATED)
@@ -112,11 +124,13 @@ class UserView(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         instance.delete()
 
+
 class TokenPairView(APIView):
     renderer_classes = [UserRenderer]
+
     # permission_classes = (AllowAny,)
 
-    def post(self, request,format=None, *args, **kwargs, ):
+    def post(self, request, format=None, *args, **kwargs, ):
         try:
             serializer = UserLoginSerializer(data=request.data)
             try:
@@ -124,10 +138,9 @@ class TokenPairView(APIView):
                     email = serializer.data.get('email')
                     password = serializer.data.get('password')
                     user = authenticate(email=email, password=password)
-                    if user is not None:
-                        otp_obj = OTP.objects.get(user=user, task_type='active')
 
-                        if otp_obj.has_used:
+                    if user is not None:
+                        if user.is_admin:
                             refresh = RefreshToken.for_user(user)
                             token = {
                                 'refresh': str(refresh),
@@ -135,7 +148,19 @@ class TokenPairView(APIView):
                             }
                             return Response({'token': token, 'message': 'Login Success'}, status=status.HTTP_200_OK)
                         else:
-                            return Response({'message': "Email is not verified"}, status=status.HTTP_403_FORBIDDEN)
+                            try:
+                                otp_obj = OTP.objects.get(user=user, task_type='active')
+                            except:
+                                print("Otp Query doesn't Exists")
+                            if otp_obj.has_used:
+                                refresh = RefreshToken.for_user(user)
+                                token = {
+                                    'refresh': str(refresh),
+                                    'access': str(refresh.access_token),
+                                }
+                                return Response({'token': token, 'message': 'Login Success'}, status=status.HTTP_200_OK)
+                            else:
+                                return Response({'message': "Email is not verified"}, status=status.HTTP_403_FORBIDDEN)
                     else:
                         return Response({'message': 'Email or Password is not Valid'}, status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
@@ -161,7 +186,7 @@ class AccountActiveOrResetView(APIView):
                     if otp_obj.task_type == 'active':
                         return Response({'message': 'Account Created Successfully'}, status=status.HTTP_201_CREATED)
                     else:
-                        link = 'http://localhost:3000/api/user/reset/' + umail + '/' + str(otp_obj.code)
+                        link = 'http://localhost:3000/api/v1/user/reset/' + umail + '/' + str(otp_obj.code)
                         print("Password Reset Link", link)
                         return Response({'message': f'Reset Password by going to this link: {link}', },
                                         status=status.HTTP_201_CREATED)
@@ -175,7 +200,7 @@ class AccountActiveOrResetView(APIView):
 
 class PasswordResetView(APIView):
     renderer_classes = [UserRenderer]
-    permission_classes = (AllowAny,)
+    # permission_classes = (AllowAny,)
 
     def post(self, request, format=None):
         try:

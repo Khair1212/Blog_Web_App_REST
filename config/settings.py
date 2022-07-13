@@ -67,17 +67,17 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.permissions.AllowAny',
+    # ],
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 2
 
 }
 
 SIMPLE_JWT = {
-'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
-'REFRESH_TOKEN_LIFETIME': timedelta(days=20),
+'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 'ROTATE_REFRESH_TOKENS': False,
 'BLACKLIST_AFTER_ROTATION': True,
 
@@ -119,10 +119,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'Blog_POC',
-        'USER': 'postgres',
-        'PASSWORD': 'khair2255',
+        'ENGINE': env('ENGINE'),
+        'NAME': env('NAME'),
+        'USER': env('USER'),
+        'PASSWORD': env('PASSWORD'),
         'HOST': 'localhost',
         'PORT': '',
     }
@@ -168,10 +168,10 @@ AUTH_USER_MODEL = 'users.User'
 
 PASSWORD_RESET_TIMEOUT  = 900
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_BACKEND = env('EMAIL_BACKEND')
+EMAIL_HOST = env('EMAIL_HOST')
 EMAIL_USE_TLS = True
-EMAIL_PORT = 587
+EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_HOST_USER = env('EMAIL_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_PASS')
-EMAIL_USE_TLS = True
+
