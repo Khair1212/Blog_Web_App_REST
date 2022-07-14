@@ -353,22 +353,28 @@
 
 ```
 {
-    "title": "Rest API V2",
-    "description": "Django Rest FrameWork",
-    "status": "published"
+    "title": "Rest API Updated",
+    "description": "Django Rest Framework"
 }
+
 ```
 **Sample Response:**
 
 ```
 {
-    "message": "Post has been published!"
+    "id": 18,
+    "title": "Rest API Updated",
+    "description": "Django Rest Framework",
+    "status": "published",
+    "created": "2022-07-14T11:18:31.271014Z",
+    "modified": "2022-07-14T11:56:27.178860Z",
+    "created_by": 33
 }
 ```
 **Instructions:** Authorization header should be included
 
 
-### **15. Partial Update Blog Post [PUT]**
+### **15. Partial Update Blog Post [PATCH]**
 **Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
 
 **Authorization:** Author of the Post or Admin
@@ -377,21 +383,25 @@
 
 ```
 {
-    "title": "Rest API V2",
-    "description": "Django Rest FrameWork",
-    "status": "published"
+    "title": "Rest FrameWork"
 }
 ```
 **Sample Response:**
 
 ```
 {
-    "message": "Post has been published!"
+    "id": 18,
+    "title": "Rest FrameWork",
+    "description": "Django Rest Framework",
+    "status": "published",
+    "created": "2022-07-14T11:18:31.271014Z",
+    "modified": "2022-07-14T11:58:33.977521Z",
+    "created_by": 33
 }
 ```
 **Instructions:** Authorization header should be included
 
-### **16. Delete Blog Post [PUT]**
+### **16. Delete Blog Post [DELETE]**
 **Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/
 
 **Authorization:** Author of the Post or Admin
@@ -399,17 +409,13 @@
 **Request Body:**
 
 ```
-{
-    "title": "Rest API V2",
-    "description": "Django Rest FrameWork",
-    "status": "published"
-}
+
 ```
 **Sample Response:**
 
 ```
 {
-    "message": "Post has been published!"
+    "message": "Post titled 'Rest FrameWork' has been deleted!"
 }
 ```
 **Instructions:** Authorization header should be included
@@ -472,52 +478,75 @@
 ]
 ```
 
-### **19. Update Comments [PUT]**
-**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/
+### **19. Update Comment [PUT]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/<Comment ID\>/
 
-**Authorization:** AllowAny
+**Authorization:** Only the Comment Author or Admin
+
+**Request Body:**
+
+```
+{
+    "body": " Updated Comment"
+}
+```
+**Sample Response:**
+
+```
+{
+    "id": 9,
+    "body": "Updated Comment",
+    "modified": "2022-07-14T11:48:54.890732Z"
+}
+```
+
+
+### **20. Partial Update Comment [PATCH]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/<Comment ID\>/
+
+**Authorization:** Only the Comment Author or Admin
+
+**Request Body:**
+
+```
+{
+    "body": " Updated Comment"
+}
+```
+
+**Sample Response:**
+
+```
+{
+    "id": 9,
+    "body": "Updated Comment",
+    "modified": "2022-07-14T11:48:54.890732Z"
+}
+```
+
+### **21. Delete Comment [DELETE]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/comments/<Comment ID\>/
+
+**Authorization:** Only the Comment Author or Admin
 
 **Request Body:**
 
 ```
 
 ```
+
 **Sample Response:**
 
 ```
-[
-    {
-        "id": 1,
-        "body": "Informative",
-        "created": "2022-07-07T10:05:10.010430Z",
-        "modified": "2022-07-07T10:05:10.010430Z",
-        "comment_by": 8,
-        "post": 9
-    },
-    {
-        "id": 6,
-        "body": "Another Comment",
-        "created": "2022-07-13T14:09:58.827290Z",
-        "modified": "2022-07-13T14:09:58.827290Z",
-        "comment_by": 32,
-        "post": 9
-    }
-]
+{
+    "message": "The comment has been deleted!"
+}
 ```
 
+Check **Swagger** or **Redoc** Documentation for more information:  
+
+**Swagger:** http://127.0.0.1:8000/swagger/
+
+**Redoc:** http://127.0.0.1:8000/redoc/
 
 
-
-
-# Models
-
-#### User
-![image](https://user-images.githubusercontent.com/41924102/178666733-c61489f5-b7fd-43e7-95bd-6fd7be8f1c0c.png)
-
-#### Post
-![image](https://user-images.githubusercontent.com/41924102/178666929-20caecce-e82e-42b0-b3fa-8b757e62c618.png)
-
-#### Comment
-![image](https://user-images.githubusercontent.com/41924102/178667097-0b3ac6b1-cf59-4ffc-aa4d-b5e040816011.png)
-
-#### OTP
