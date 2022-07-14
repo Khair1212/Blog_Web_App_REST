@@ -9,10 +9,10 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Post, Comment
-from .permissions import IsAuthorOrReadOnly
+from .permissions import  IsPostAuthorOrReadOnly, IsCommentAuthorOrReadOnly
 from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentCreateSerializer, \
-    CommentSerializer, CommentUpdateSerializer
-from rest_framework import permissions
+    CommentSerializer, CommentUpdateSerializer, PostShareSerializer
+from rest_framework.permissions import IsAdminUser
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
@@ -59,7 +59,7 @@ class PostViewSet(viewsets.ModelViewSet):
         elif self.action == 'list':
             self.permission_classes = [permissions.AllowAny, ]
         else:
-            self.permission_classes = [IsAuthorOrReadOnly, ]
+            self.permission_classes = [IsPostAuthorOrReadOnly, IsAdminUser]
         return [permission() for permission in self.permission_classes]
 
     # Create Post
@@ -98,8 +98,8 @@ class PostViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
-            serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
-            if serializer.is_valid(raise_exception=True):
+            serializer = self.get_serializer(instance=instance, data=request.data, partial=True)
+            if serializer.is_valid():
                 self.perform_update(serializer)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
@@ -118,6 +118,7 @@ class PostViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         try:
             instance = self.get_object()
+
             self.perform_destroy(instance)
             return Response({"message": f"Post titled '{instance.title}' has been deleted!"},
                             status=status.HTTP_204_NO_CONTENT)
@@ -137,6 +138,17 @@ class PostViewSet(viewsets.ModelViewSet):
     #     comments = post.comments.all()
     #     return Response(CommentSerializer(comments, many=True))
 
+class ShareView(APIView):
+    def post(self, request, *args, **kwargs):
+        try:
+            serializer = PostShareSerializer(data = request.data)
+            if serializer.is_valid(raise_exception=True):
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            error = f'Server Error: {e}'
+            return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # Comment Viewset
 class CommentViewSet(viewsets.ModelViewSet):
@@ -147,8 +159,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_classes = {
         'list': CommentSerializer,
         'create': CommentCreateSerializer,
-        # 'update': CommentUpdateSerializer,
-        # 'partial_update': CommentUpdateSerializer
+        'update': CommentUpdateSerializer,
+        'partial_update': CommentUpdateSerializer
     }
 
     # Get Serializer for specific action
@@ -161,17 +173,17 @@ class CommentViewSet(viewsets.ModelViewSet):
         elif self.action == 'list':
             self.permission_classes = [permissions.AllowAny, ]
         else:
-            self.permission_classes = [IsAuthorOrReadOnly, ]
+            self.permission_classes = [IsCommentAuthorOrReadOnly, IsAdminUser]
         return [permission() for permission in self.permission_classes]
 
     def perform_create(self, post, serializer):
-        serializer.save(created_by=self.request.user)
+        serializer.save(comment_by=self.request.user)
 
     def create(self, request, *args, **kwargs):
 
         try:
             data = request.data
-            serializer = CommentCreateSerializer(data=data,)
+            serializer = CommentCreateSerializer(data=data, )
             post = Post.objects.get(id=kwargs.get('pk'))
             print(post)
             if serializer.is_valid(raise_exception=True):
@@ -180,13 +192,10 @@ class CommentViewSet(viewsets.ModelViewSet):
 
                 return Response(serializer.data)
             return Response({'message': f'Comment Added to post'},
-                                status=status.HTTP_201_CREATED)
+                            status=status.HTTP_201_CREATED)
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def perform_update(self, serializer):
-        serializer.save(comment_by=self.request.user)
 
     def update(self, request, *args, **kwargs):
         try:
@@ -215,3 +224,4 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         def perform_destroy(self, instance):
             instance.delete()
+

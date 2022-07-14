@@ -24,7 +24,8 @@ class PostCreateSerializer(serializers.ModelSerializer):
 class PostUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
-        fields = ('id', 'title', 'description', 'status', 'modified')
+        # fields = ('id', 'title', 'description', 'status')
+        fields = '__all__'
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
@@ -42,4 +43,11 @@ class CommentSerializer(serializers.ModelSerializer):
 class CommentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ('id', 'body', 'updated')
+        fields = ('id', 'body', 'modified')
+
+class PostShareSerializer(serializers.Serializer):
+    email = serializers.CharField(max_length=255)
+
+    class Meta:
+        fields = ['email']
+

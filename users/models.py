@@ -89,7 +89,7 @@ class OTP(models.Model):
     has_used = models.BooleanField(default=False)
     task_type = models.CharField(max_length=100, choices=task_choice, default='active')
 
-    # def __str__(self):
-    #     return self.code
+    def __str__(self):
+        return self.code
 
 

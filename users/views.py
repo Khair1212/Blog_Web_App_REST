@@ -18,7 +18,8 @@ from .permissions import UserPermission
 from .renderers import UserRenderer
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 # Create your views here.
 from .utils import Util
@@ -129,7 +130,14 @@ class TokenPairView(APIView):
     renderer_classes = [UserRenderer]
 
     # permission_classes = (AllowAny,)
-
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'otp': openapi.Schema(type=openapi.TYPE_STRING,
+                                     description='Any keyword, will be searched in task name, task description, '
+                                                 'assignee name, product name')
+        }
+    ))
     def post(self, request, format=None, *args, **kwargs, ):
         try:
             serializer = UserLoginSerializer(data=request.data)
@@ -174,6 +182,14 @@ class AccountActiveOrResetView(APIView):
     renderer_classes = [UserRenderer]
     permission_classes = (AllowAny,)
 
+    @swagger_auto_schema(request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'otp': openapi.Schema(type=openapi.TYPE_STRING,
+                                  description='Any keyword, will be searched in task name, task description, '
+                                              'assignee name, product name')
+        }
+    ))
     def post(self, request, umail, format=None):
         try:
             serializer = AccountActiveSerializer(data=request.data, context={'umail': umail})
