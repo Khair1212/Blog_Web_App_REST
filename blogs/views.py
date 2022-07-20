@@ -8,14 +8,17 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from . import tasks
 from .models import Post, Comment
-from .permissions import  IsPostAuthorOrReadOnly, IsCommentAuthorOrReadOnly
+from .permissions import IsPostAuthorOrReadOnly, IsCommentAuthorOrReadOnly
 from .serializers import PostSerializer, PostCreateSerializer, PostUpdateSerializer, CommentCreateSerializer, \
     CommentSerializer, CommentUpdateSerializer, PostShareSerializer
 from rest_framework.permissions import IsAdminUser
 from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
+from django.urls import resolve
 
 
 # Create your views here.
@@ -138,17 +141,24 @@ class PostViewSet(viewsets.ModelViewSet):
     #     comments = post.comments.all()
     #     return Response(CommentSerializer(comments, many=True))
 
-class ShareView(APIView):
+
+class SharePostView(APIView):
     def post(self, request, *args, **kwargs):
         try:
-            serializer = PostShareSerializer(data = request.data)
+            serializer = PostShareSerializer(data=request.data)
             if serializer.is_valid(raise_exception=True):
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                to_emails = serializer.data.get('email')
+                print(to_emails)
+
+                # current_url = resolve(request.path_info).url_name
+                current_url = "http://127.0.0.1:8000/" + str(request.path)
+                tasks.send_mail_func.delay(to_emails, current_url)
+                return Response(f"Sharing this post to: {serializer.data['email']} is being processed...",
+                                status=status.HTTP_200_OK)
 
         except Exception as e:
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 # Comment Viewset
 class CommentViewSet(viewsets.ModelViewSet):
@@ -224,4 +234,3 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         def perform_destroy(self, instance):
             instance.delete()
-

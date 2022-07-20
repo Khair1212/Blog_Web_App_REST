@@ -46,7 +46,7 @@ class CommentUpdateSerializer(serializers.ModelSerializer):
         fields = ('id', 'body', 'modified')
 
 class PostShareSerializer(serializers.Serializer):
-    email = serializers.CharField(max_length=255)
+    email = serializers.ListField()
 
     class Meta:
         fields = ['email']
