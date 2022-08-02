@@ -74,7 +74,7 @@ class UserView(viewsets.ModelViewSet):
                     link = 'http://127.0.0.1:8000/api/v1/account_active/' + umail
                     #print(link)
                     # send_otp_via_email(user.email, account_activation)
-                    body = f'Otp Code: {otp}, Click the following link to active your account' + link
+                    body = f'Otp Code: {otp}, Click the following link to active your account: ' + link
                     data = {
                         'subject': 'Active your Account',
                         'body': body,

@@ -25,7 +25,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
@@ -35,7 +34,6 @@ DEBUG = env('DEBUG')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env('SECRET_KEY')
 
-
 ALLOWED_HOSTS = []
 
 # Application definition
@@ -44,6 +42,7 @@ REST_AUTH_TOKEN_MODEL = None
 INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'blogs.apps.BlogsConfig',
+    'urlShortner.apps.LinkshortnerConfig',
     'rest_framework',
     'rest_framework_simplejwt',
     'django_filters',
@@ -56,7 +55,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
 
 ]
 
@@ -75,13 +73,12 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-'ROTATE_REFRESH_TOKENS': False,
-'BLACKLIST_AFTER_ROTATION': True,
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
 
 }
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -149,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 
@@ -171,15 +168,12 @@ CELERY_TIMEZONE = 'Asia/Dhaka'
 
 CELERY_RESULT_BACKEND = 'django-db'
 
-
 # Celery Beat
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-
-
 AUTH_USER_MODEL = 'users.User'
 
-PASSWORD_RESET_TIMEOUT  = 900
+PASSWORD_RESET_TIMEOUT = 900
 
 EMAIL_BACKEND = env('EMAIL_BACKEND')
 EMAIL_HOST = env('EMAIL_HOST')
@@ -187,4 +181,5 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = env('EMAIL_PORT')
 EMAIL_HOST_USER = env('EMAIL_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_PASS')
-
+EMAIL_FROM = env('EMAIL_FROM')
+HOST_URL = 'localhost'

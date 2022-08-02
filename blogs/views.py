@@ -1,3 +1,8 @@
+import datetime
+import random
+import re
+from django.core.validators import URLValidator
+from django.conf import settings
 from django.shortcuts import render
 from django_filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -19,6 +24,7 @@ from rest_framework import permissions
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from django.urls import resolve
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 
 
 # Create your views here.
@@ -160,6 +166,7 @@ class SharePostView(APIView):
             error = f'Server Error: {e}'
             return Response({'message': error}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 # Comment Viewset
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
@@ -234,3 +241,5 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         def perform_destroy(self, instance):
             instance.delete()
+
+

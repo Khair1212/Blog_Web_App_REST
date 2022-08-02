@@ -1,6 +1,13 @@
+import datetime
+import random
+
+import requests
 from django.conf import settings
+from django.core.validators import URLValidator
 from django.db import models
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
+
 from .models import Post, Comment
 
 
@@ -44,6 +51,7 @@ class CommentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ('id', 'body', 'modified')
+
 
 class PostShareSerializer(serializers.Serializer):
     email = serializers.ListField()

@@ -12,5 +12,6 @@ router2.register('comments', CommentViewSet, basename='comments')
 urlpatterns = [
     path('', include(router1.urls)),
     path('blogs/<int:pk>/', include(router2.urls)),
-    path('blogs/<int:pk>/share_post/', SharePostView.as_view(), name="share_post")
+    path('blogs/<int:pk>/share_post/', SharePostView.as_view(), name="share_post"),
+
 ]

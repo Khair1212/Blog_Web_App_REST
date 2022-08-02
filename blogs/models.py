@@ -1,3 +1,5 @@
+import datetime as dt
+from django.utils.timezone import now
 from django.db import models
 from users.models import User
 
@@ -30,3 +32,4 @@ class Comment(models.Model):
 
     def __str__(self):
         return self.body
+
