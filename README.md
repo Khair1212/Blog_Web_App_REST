@@ -1,4 +1,23 @@
 # Blog_Web_App_REST
+A Blog Web Application with two basic module: 
+* User Login System
+    * Uses JWT Authentication
+    * Email verification through 6 digit OTP in register and password reset
+    * Proper Access Permission
+    
+* Post Blog System
+    * Uses Filter/Search to find the posts
+    * Pagination 
+    * Asynchronus Post Share to Multiple Emails [Celery, Redis]
+    * Comments
+    * Proper Access Permission and Authentication
+    
+**Technolgies Used**
+* Django Rest Framework
+* Postgresql
+* Celery
+* Redis
+
 
 # API Endpoints
 
@@ -542,6 +561,26 @@
     "message": "The comment has been deleted!"
 }
 ```
+
+### **21. Post Share [POST]**
+**Endpoint:**  http://127.0.0.1:8000/api/v1/blogs/<Post ID\>/share/
+
+**Authorization:** Allowany
+
+**Request Body:**
+
+```
+{
+    "email": ["khair.ahammed04@outlook.com", "khair.ahammed05@outlook.com"]
+}
+```
+
+**Sample Response:**
+
+```
+"Sharing this post to: ['khair.ahammed04@outlook.com', 'khair.ahammed05@outlook.com'] is being processed..."
+```
+
 
 Check **Swagger** or **Redoc** Documentation for more information:  
 
