@@ -1,5 +1,5 @@
 # Blog_Web_App_REST
-A Blog Web Application with two basic module: 
+A Blog Web Application with three module: 
 * User Login System
     * Uses JWT Authentication
     * Email verification through 6 digit OTP in register and password reset
@@ -11,7 +11,12 @@ A Blog Web Application with two basic module:
     * Asynchronus Post Share to Multiple Emails [Celery, Redis]
     * Comments
     * Proper Access Permission and Authentication
-    
+
+* Url Shortner
+    * Post share though email
+    * Automatically generate short url of the link while sharing through mail
+  
+
 **Technolgies Used**
 * Django Rest Framework
 * Postgresql
